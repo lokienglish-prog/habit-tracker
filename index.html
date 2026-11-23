@@ -324,9 +324,9 @@ const TPL=[{n:'Run 20 minutes',ob:'Every day, morning',c:0,i:0,streak:12,rate:88
 {n:'Drink 8 glasses of water',sn:'Drink 8 glasses',ob:'Every day',c:3,i:4,t:'count',count:5,target:8,streak:9,rate:80,age:280,remOn:false},
 {n:'Stop doom-scrolling',ob:'Avoid habit · counts days clean',sub:'Avoid habit',c:5,i:2,t:'avoid',streak:6,rate:75,age:75,remOn:false}];
 let S;
-const fresh=()=>({nid:1,scr:'onb',sel:[0,1],habits:[],arch:[],set:{nudge:true,quiet:0,theme:0,accent:6}});
+const fresh=()=>({nid:1,scr:'today',sel:[],habits:[],arch:[],set:{nudge:true,quiet:0,theme:0,accent:6}});
 // Bring any saved state up to the current shape: archive list, heat aligned to HL (older saves kept 24 days)
-function norm(s){s.arch=s.arch||[];s.habits.concat(s.arch).forEach(h=>{const p=h.heat||'';h.heat=p.length<HL?'-'.repeat(HL-p.length)+p:p.slice(-HL)});return s}
+function norm(s){s.arch=s.arch||[];if(s.scr==='onb')s.scr='today';s.habits.concat(s.arch).forEach(h=>{const p=h.heat||'';h.heat=p.length<HL?'-'.repeat(HL-p.length)+p:p.slice(-HL)});return s}
 function mk(o){return Object.assign({id:'h'+(S.nid++),t:'check',n:'',c:0,i:0,sub:'Every day',done:false,time:'',count:0,target:8,notes:[],paused:false,rem:'7:00 am',remOn:true,rep:0,x:3,days:'1111111',heat:'-'.repeat(HL)},o)}
 function genHeat(streak,rt,seed,age){let s=seed*9301+49297;const r=()=>(s=(s*9301+49297)%233280)/233280;let a='';for(let k=0;k<HL;k++){const ago=HL-k;a+=ago>age?'-':ago<=streak?'1':ago===streak+1?'0':r()*100<rt+8-22*ago/HL?'1':'0'}return a}
 function fromTpl(k,over){const t=Object.assign({},TPL[k],over);const h=mk(t);h.notes=(t.notes||[]).map(x=>x.slice());h.heat=genHeat(t.streak,t.rate,k+3,t.age);delete h.ob;delete h.rate;delete h.age;delete h.streak;return h}
