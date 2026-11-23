@@ -249,7 +249,7 @@ html,body{width:100%;height:100%;background:#111213}
 <div class="st">9:41</div>
 <div class="scr" id="s-onb"><div class="in" style="bottom:0"><h1>Which habits do you want to start with?</h1><p id="onbsub">Pick up to 3. You can change them anytime.</p><div id="tpl" class="list"></div><div id="own" data-p=".95">Create your own instead</div></div>
 <div class="primary" id="start" data-p=".96"><span id="sa"></span><span class="roll" id="sn"></span><span id="sb2"></span></div></div>
-<div class="scr" id="s-today"><div class="in"><div class="rowh"><div><div class="date">Thursday, 19 November</div><h1 id="tt" class="roll">Today</h1></div><div class="addb" id="add" data-p=".85"><svg viewBox="0 0 20 20"><path d="M10 1v18M1 10h18"/></svg></div></div>
+<div class="scr" id="s-today"><div class="in"><div class="rowh"><div><div class="date"></div><h1 id="tt" class="roll">Today</h1></div><div class="addb" id="add" data-p=".85"><svg viewBox="0 0 20 20"><path d="M10 1v18M1 10h18"/></svg></div></div>
 <div id="prog"><div class="pl"><span class="roll" id="pc"></span></div><div id="segs"></div></div><div id="habits" class="list"></div><div id="empty"><svg id="esvg" viewBox="0 0 480 236" role="button" aria-label="Add your first habit"><defs><filter id="egoo" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter><filter id="esoft"><feGaussianBlur stdDeviation="14"/></filter><linearGradient id="ecg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B9A"/><stop offset=".5" stop-color="#9B6BFF"/><stop offset="1" stop-color="#3FA9FF"/></linearGradient></defs><g id="ehalo" filter="url(#esoft)" opacity=".35"></g><g id="egoo-g" filter="url(#egoo)"></g><g id="eicons"></g><g><circle id="ering" cx="240" cy="118" r="34" fill="none" stroke="#9B6BFF" stroke-width="2" opacity="0"/><path id="epl" d="M240 102v32M224 118h32" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g></svg><h2>Every good habit starts here</h2><p>Tap the + button to add your first one — a run, a book, a glass of water.</p></div><p class="hint" id="thint"></p></div></div>
 <div class="scr" id="s-stats"><div class="in"><h1 style="margin-top:74px">Stats</h1>
 <div class="seg light" id="sseg" data-step="115.33" style="margin-top:15px"><div class="thumb" style="width:115.33px;transform:translateX(115.33px)"></div><label>Week</label><label class="on">Month</label><label>Year</label></div>
@@ -272,7 +272,7 @@ html,body{width:100%;height:100%;background:#111213}
 <div class="card rem">Remind me at<span class="time acc roll" id="time">7:00 am</span><div id="swt" class="swt on acc"><i></i></div></div>
 <div class="note" id="snote">Reminders are local notifications. Nothing leaves your phone.</div>
 </div></div></div>
-<div id="nw"><div id="nscrim"></div><div id="ns"><b id="nt"></b><small>Thursday, 19 November</small><div id="nfw"><input id="ni" placeholder="How did it go?" maxlength="40" autocomplete="off" spellcheck="false"></div><div id="nch"></div><div id="nsave" data-p=".96">Save note</div></div></div>
+<div id="nw"><div id="nscrim"></div><div id="ns"><b id="nt"></b><small id="nd"></small><div id="nfw"><input id="ni" placeholder="How did it go?" maxlength="40" autocomplete="off" spellcheck="false"></div><div id="nch"></div><div id="nsave" data-p=".96">Save note</div></div></div>
 <div id="wipe"></div>
 <div id="toast"><span id="tm"></span><b id="ta" data-p=".9"></b></div>
 <canvas id="fx" width="780" height="1688"></canvas>
@@ -314,19 +314,27 @@ const ROWS=[['onb','Onboarding — pick up to 3','Rows outline in their own colo
 $('#rows').innerHTML=ROWS.map(r=>'<div class="row" id="r-'+r[0]+'"><b>'+r[1]+'</b><span>'+r[2]+'</span></div>').join('');
 function flash(){for(const id of arguments){const el=$('#r-'+id);el.classList.add('hit');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('hit'),350)}}
 // state
-// Calendar: the prototype is pinned to Thursday 19 November 2026. h.heat holds one char per day from 1 Jan 2026
+// Calendar: today is the device's date. h.heat holds one char per day from 1 Jan 2026
 // ('1' done, '0' missed, '-' no record), so heat[i] is 1 Jan + i days and heat.length === HL. Today lives in h.done.
-const dayIdx=d=>Math.round((d-new Date(2026,0,1))/864e5),HL=dayIdx(new Date(2026,10,19)),TODAY_SHORT='19 Nov';
+// S.day is the HL the state was saved on; norm() rolls older saves forward. PIN: the date the prototype used to be pinned to.
+// TI: today's cell in the 4-week heatmap (rows start on Monday).
+const dayIdx=d=>Math.round((d-new Date(2026,0,1))/864e5),NOW=new Date(),YEAR=NOW.getFullYear(),HL=dayIdx(new Date(YEAR,NOW.getMonth(),NOW.getDate())),PIN=dayIdx(new Date(2026,10,19)),TI=21+(NOW.getDay()+6)%7;
+const shortD=i=>{const d=new Date(2026,0,1+i);return d.getDate()+' '+'JanFebMarAprMayJunJulAugSepOctNovDec'.substr(d.getMonth()*3,3)},TODAY_SHORT=shortD(HL);
 // age = days of history a template habit arrives with (synthetic demo data, generated once, then edited like real data)
-const TPL=[{n:'Run 20 minutes',ob:'Every day, morning',c:0,i:0,streak:12,rate:88,age:322,rem:'7:00 am',notes:[['17 Nov','Legs heavy, did 15 minutes.'],['12 Nov','New route along the river.']]},
+const TPL=[{n:'Run 20 minutes',ob:'Every day, morning',c:0,i:0,streak:12,rate:88,age:322,rem:'7:00 am',notes:[[shortD(HL-2),'Legs heavy, did 15 minutes.'],[shortD(HL-7),'New route along the river.']]},
 {n:'Read 10 pages',ob:'Every day, evening',c:1,i:3,streak:5,rate:70,age:230,rem:'8:30 pm'},
 {n:'Meditate 5 minutes',ob:'Weekdays',sub:'Weekdays',rep:1,days:'1111100',c:2,i:1,streak:21,rate:60,age:140,rem:'8:30 pm'},
 {n:'Drink 8 glasses of water',sn:'Drink 8 glasses',ob:'Every day',c:3,i:4,t:'count',count:5,target:8,streak:9,rate:80,age:280,remOn:false},
 {n:'Stop doom-scrolling',ob:'Avoid habit · counts days clean',sub:'Avoid habit',c:5,i:2,t:'avoid',streak:6,rate:75,age:75,remOn:false}];
 let S;
-const fresh=()=>({nid:1,scr:'today',sel:[],habits:[],arch:[],set:{nudge:true,quiet:0,theme:0,accent:6}});
-// Bring any saved state up to the current shape: archive list, heat aligned to HL (older saves kept 24 days)
-function norm(s){s.arch=s.arch||[];if(s.scr==='onb')s.scr='today';s.habits.concat(s.arch).forEach(h=>{const p=h.heat||'';h.heat=p.length<HL?'-'.repeat(HL-p.length)+p:p.slice(-HL)});return s}
+const fresh=()=>({day:HL,nid:1,scr:'today',sel:[],habits:[],arch:[],set:{nudge:true,quiet:0,theme:0,accent:6}});
+// Bring any saved state up to the current shape: archive list, heat aligned to HL (older saves kept 24 days).
+// On a new day the saved day's check-in moves into heat and the days since count as missed
+// (no record while paused or archived), then today starts unchecked.
+function norm(s){s.arch=s.arch||[];if(s.scr==='onb')s.scr='today';const last=s.day==null?PIN:s.day;
+s.habits.concat(s.arch).forEach(h=>{let p=h.heat||'';p=p.length<last?'-'.repeat(last-p.length)+p:p.slice(-last);
+if(last<HL){const off=h.paused||s.arch.includes(h);p+=h.done?'1':off?'-':'0';p+=(off?'-':'0').repeat(HL-last-1);h.done=false;h.count=0;h.time=''}
+h.heat=p.length<HL?'-'.repeat(HL-p.length)+p:p.slice(-HL)});s.day=HL;return s}
 function mk(o){return Object.assign({id:'h'+(S.nid++),t:'check',n:'',c:0,i:0,sub:'Every day',done:false,time:'',count:0,target:8,notes:[],paused:false,rem:'7:00 am',remOn:true,rep:0,x:3,days:'1111111',heat:'-'.repeat(HL)},o)}
 function genHeat(streak,rt,seed,age){let s=seed*9301+49297;const r=()=>(s=(s*9301+49297)%233280)/233280;let a='';for(let k=0;k<HL;k++){const ago=HL-k;a+=ago>age?'-':ago<=streak?'1':ago===streak+1?'0':r()*100<rt+8-22*ago/HL?'1':'0'}return a}
 function fromTpl(k,over){const t=Object.assign({},TPL[k],over);const h=mk(t);h.notes=(t.notes||[]).map(x=>x.slice());h.heat=genHeat(t.streak,t.rate,k+3,t.age);delete h.ob;delete h.rate;delete h.age;delete h.streak;return h}
@@ -467,12 +475,12 @@ function openNote(h){if(!h)return;N=h;$('#nt').textContent='Note for '+(h.sn||h.
 function closeNote(){nw.classList.remove('open');$('#ni').blur();N=null}
 $('#nscrim').addEventListener('click',closeNote);
 $('#nch').addEventListener('click',e=>{const c=e.target.closest('div[data-p]');if(c){$('#ni').value=c.textContent;pop($('#nfw'),1.03);tone(800,.05,'triangle',.04)}});
-$('#nsave').addEventListener('click',()=>{const v=$('#ni').value.trim();if(!v){shake($('#nfw'));return}const h=N;h.notes.unshift(['19 Nov',v]);closeNote();toast('Note saved to '+(h.sn||h.n)+'.');tone(880,.15);save();flash('hold')});
+$('#nsave').addEventListener('click',()=>{const v=$('#ni').value.trim();if(!v){shake($('#nfw'));return}const h=N;h.notes.unshift([TODAY_SHORT,v]);closeNote();toast('Note saved to '+(h.sn||h.n)+'.');tone(880,.15);save();flash('hold')});
 // detail
 let D=null,dOrigin={x:195,y:400},archArm=0;
 const days=n=>n+(n===1?' day':' days');
 function dstats(dur){const s=st(D);countTo($('#d1'),s.cur,days,dur);countTo($('#d2'),s.best,days,dur);countTo($('#d3'),s.rate,n=>n+'% '+(D.t==='avoid'?'clean':'done'),dur)}
-function renderDetail(){const h=D;sd.style.setProperty('--accent',COLORS[h.c].hex);let cells='';for(let k=0;k<28;k++){const ch=h.heat[HL-24+k];cells+='<div class="hc '+(k<24?(ch==='1'?'d':ch==='-'?'n':''):k===24?'t'+(h.done?' d':''):'f')+'" data-k="'+k+'"'+(k<25?' data-p=".85"':'')+'></div>'}
+function renderDetail(){const h=D;sd.style.setProperty('--accent',COLORS[h.c].hex);let cells='';for(let k=0;k<28;k++){const ch=h.heat[HL-TI+k];cells+='<div class="hc '+(k<TI?(ch==='1'?'d':ch==='-'?'n':''):k===TI?'t'+(h.done?' d':''):'f')+'" data-k="'+k+'"'+(k<=TI?' data-p=".85"':'')+'></div>'}
 $('#dc').innerHTML='<div class="nav"><div id="back" data-p=".9">'+BACK+'Today</div><div id="edit" data-p=".9">Edit</div></div>'+
 '<div><div class="dt"><h1>'+esc(h.n)+'</h1><div class="chipw">'+icon(h.i)+'</div></div><div class="dsub">'+esc(h.sub)+' · '+(h.remOn?'Reminder at '+h.rem:'No reminder')+'<span id="pz">'+(h.paused?' · Paused':'')+'</span></div></div>'+
 '<div class="sts"><div><small>'+(h.t==='avoid'?'Days clean':'Current streak')+'</small><b id="d1">0</b></div><div><small>Best streak</small><b id="d2">0</b></div><div><small>Last 30 days</small><b id="d3">0</b></div></div>'+
@@ -486,8 +494,8 @@ $$('.hc').forEach((c,k)=>c.animate([{transform:'scale(.3)',opacity:0},{transform
 later(()=>{if(D===h)dstats(800)},300);tone(NOTES[h.c]*.5,.25,'sine',.06);flash('open')}
 function closeDetail(then){if(!D)return;const h=D;D=null;clearTimeout(archArm);archArm=0;renderToday(false);const row=rowOf(h),o=row?pos(row):dOrigin;
 sd.animate([{clipPath:'circle(950px at '+o.x+'px '+o.y+'px)'},{clipPath:'circle(0px at '+o.x+'px '+o.y+'px)'}],{duration:440,easing:'cubic-bezier(.5,0,.6,1)',fill:'forwards'}).onfinish=function(){sd.classList.remove('on');this.cancel();if(row)pop(row,1.03);if(then)then()};tone(392,.12,'triangle',.04)}
-function cell(c){const k=+c.dataset.k;if(k>24)return;if(k===24){toggle(D,null);c.classList.toggle('d',D.done);if(D.done){const p=pos(c);burst(p.x,p.y,{hex:'#fff',h:0,s:0,l:100},8)}}
-else{const i=HL-24+k,on=D.heat[i]!=='1';D.heat=D.heat.slice(0,i)+(on?'1':'0')+D.heat.slice(i+1);c.className='hc'+(on?' d':'');tone(on?700:420,.08,'triangle',.05);save()}
+function cell(c){const k=+c.dataset.k;if(k>TI)return;if(k===TI){toggle(D,null);c.classList.toggle('d',D.done);if(D.done){const p=pos(c);burst(p.x,p.y,{hex:'#fff',h:0,s:0,l:100},8)}}
+else{const i=HL-TI+k,on=D.heat[i]!=='1';D.heat=D.heat.slice(0,i)+(on?'1':'0')+D.heat.slice(i+1);c.className='hc'+(on?' d':'');tone(on?700:420,.08,'triangle',.05);save()}
 c.animate([{transform:'scale(.7)'},{transform:'scale(1.18)',offset:.5},{transform:'scale(1)'}],{duration:380,easing:E});detL.pulse=1;dstats(450);flash('open')}
 function pause(){const h=D;h.paused=!h.paused;roll($('#pause span'),h.paused?'Resume habit':'Pause habit');$('#heat').classList.toggle('paused',h.paused);$('#pz').textContent=h.paused?' · Paused':'';toast(h.paused?'Paused. Your '+st(h).cur+'-day streak is safe.':'Welcome back. Streak intact.');tone(h.paused?400:660,.12);save();flash('arch')}
 function archive(el){flash('arch');if(!archArm){archArm=setTimeout(()=>{archArm=0;if(el.isConnected){roll(el,'Archive habit');el.parentNode.classList.remove('warn')}},3000);roll(el,'Tap again to archive');el.parentNode.classList.add('warn');shake(el);tone(250,.12,'triangle',.05);return}
@@ -577,9 +585,9 @@ const pool=()=>{const h=SV.f&&byId(SV.f);return h?[h]:S.habits};
 // The bars of the current range, each a span of days a..b
 function periods(){if(SV.r===0)return 'MTWTFSS'.split('').map((l,k)=>{const i=MON0+k;return{lab:l,a:i,b:i,cap:i===HL?'Today so far':fmtD(i)}});
 if(SV.r===1)return [0,1,2,3].map(k=>{const a=MON0-21+k*7,d=dOf(a);return{lab:k===3?'This week':MON[d.getMonth()].slice(0,3)+' '+d.getDate(),a,b:a+6,cap:k===3?'This week so far':'Week of '+d.getDate()+' '+MON[d.getMonth()]}});
-return MON.map((m,k)=>{const a=dayIdx(new Date(2026,k,1)),b=dayIdx(new Date(2026,k+1,1))-1;return{lab:m[0],a,b,cap:a<=HL&&HL<=b?m+' so far':m}})}
+return MON.map((m,k)=>{const a=dayIdx(new Date(YEAR,k,1)),b=dayIdx(new Date(YEAR,k+1,1))-1;return{lab:m[0],a,b,cap:a<=HL&&HL<=b?m+' so far':m}})}
 // The window the headline and By habit describe: the tapped bar, or the whole range so far
-function win(P){if(SV.sel>=0)return P[SV.sel];return{a:P[0].a,b:Math.min(P[P.length-1].b,HL),cap:['This week so far','Last 4 weeks','2026 so far'][SV.r]}}
+function win(P){if(SV.sel>=0)return P[SV.sel];return{a:P[0].a,b:Math.min(P[P.length-1].b,HL),cap:['This week so far','Last 4 weeks',YEAR+' so far'][SV.r]}}
 function updChart(stag,stagRows){const P=periods(),hs=pool(),v=P.map(p=>p.a>HL?null:agg(hs,p.a,p.b)),h=SV.f&&byId(SV.f);
 if(SV.sel>=0&&!(v[SV.sel]&&v[SV.sel].p>=0))SV.sel=-1;let last=0;v.forEach((x,k)=>{if(x&&x.p>=0)last=k});const on=SV.sel>=0?SV.sel:last;
 $('#chart').style.setProperty('--bc',h?COLORS[h.c].hex:'');
@@ -653,5 +661,6 @@ try{document.getAnimations().forEach(a=>{if(a.playbackRate!==r)a.playbackRate=r}
 if(shw.classList.contains('open')){const h=dt/1000/4;for(let k=0;k<4;k++){rv+=(-300*(rx-rt)-20*rv)*h;rx+=rv*h}const s=Math.min(Math.abs(rv)/2600,.4);ring.style.transform='translateX('+rx.toFixed(2)+'px) scale('+(1+s).toFixed(3)+','+(1-s*.55).toFixed(3)+')';sheetL.step(dt)}
 if(sd.classList.contains('on'))detL.step(dt);stepFx(dt);requestAnimationFrame(frame)}
 const init=api.getState();S=init&&init.v===2&&init.s?norm(JSON.parse(JSON.stringify(init.s))):fresh();
+$$('.date,#nd').forEach(el=>el.textContent=WDN[NOW.getDay()]+', '+NOW.getDate()+' '+MON[NOW.getMonth()]);
 applyAll();poster();requestAnimationFrame(frame);
 </script></body></html>
